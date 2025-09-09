@@ -1,0 +1,131 @@
+// script.js
+// Minimal JS: mobile nav toggle, smooth scroll, modal previews, simple form validation
+
+document.addEventListener('DOMContentLoaded', () => {
+  // header year
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // NAV toggle for small screens
+  const nav = document.getElementById('siteNav');
+  const navToggle = document.getElementById('navToggle');
+  navToggle.addEventListener('click', () => {
+    const expanded = navToggle.getAttribute('aria-expanded') === 'true';
+    navToggle.setAttribute('aria-expanded', String(!expanded));
+    nav.setAttribute('aria-hidden', String(expanded));
+  });
+
+  // Smooth scroll for in-page links
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', (e) => {
+      const href = a.getAttribute('href');
+      if (href.length > 1) {
+        e.preventDefault();
+        const el = document.querySelector(href);
+        if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
+        // close nav on mobile
+        if (window.innerWidth < 720) {
+          nav.setAttribute('aria-hidden', 'true');
+          navToggle.setAttribute('aria-expanded', 'false');
+        }
+      }
+    });
+  });
+
+  // Project modal behavior
+  const modal = document.getElementById('projectModal');
+  const modalContent = document.getElementById('modalContent');
+  const modalClose = document.getElementById('modalClose');
+
+  function openModal(title, desc, id) {
+    modalContent.innerHTML = `
+      <h3>${escapeHtml(title)}</h3>
+      <p>${escapeHtml(desc)}</p>
+      <div style="margin-top:1rem;">
+        <em>Demo/Links for <strong>${escapeHtml(id)}</strong> would go here.</em>
+      </div>
+    `;
+    modal.setAttribute('aria-hidden', 'false');
+    // trap focus minimally:
+    modalClose.focus();
+  }
+
+  function closeModal(){
+    modal.setAttribute('aria-hidden','true');
+  }
+
+  document.querySelectorAll('.open-project').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const card = e.target.closest('.project-card');
+      const title = card.dataset.title || 'Project';
+      const desc = card.dataset.desc || '';
+      const id = btn.dataset.id || '';
+      openModal(title, desc, id);
+    });
+  });
+
+  modalClose.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.getAttribute('aria-hidden') === 'false') closeModal();
+  });
+
+  // Simple contact form validation & fake submit
+  const form = document.getElementById('contactForm');
+  const nameEl = document.getElementById('name');
+  const emailEl = document.getElementById('email');
+  const messageEl = document.getElementById('message');
+  const nameError = document.getElementById('nameError');
+  const emailError = document.getElementById('emailError');
+  const messageError = document.getElementById('messageError');
+  const formSuccess = document.getElementById('formSuccess');
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    clearErrors();
+    let ok = true;
+    if (nameEl.value.trim().length < 2) {
+      nameError.textContent = 'Please enter your name.';
+      ok = false;
+    }
+    if (!validateEmail(emailEl.value)) {
+      emailError.textContent = 'Please enter a valid email.';
+      ok = false;
+    }
+    if (messageEl.value.trim().length < 10) {
+      messageError.textContent = 'Message must be at least 10 characters.';
+      ok = false;
+    }
+
+    if (!ok) return;
+
+    // Simulate sending
+    formSuccess.textContent = 'Message sent — thanks! (demo)';
+    form.reset();
+
+    // clear success after 4s
+    setTimeout(() => formSuccess.textContent = '', 4000);
+  });
+
+  function clearErrors(){
+    nameError.textContent = '';
+    emailError.textContent = '';
+    messageError.textContent = '';
+    formSuccess.textContent = '';
+  }
+
+  function validateEmail(email) {
+    // simple email regex (not perfect but fine for demo)
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  // small helper to escape text for modal
+  function escapeHtml(str = '') {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+});
